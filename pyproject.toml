@@ -4,4 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "cognee",
+    "langchain",
+    "langchain_openai",
+    "langgraph",
+    "python-dotenv",
+]
