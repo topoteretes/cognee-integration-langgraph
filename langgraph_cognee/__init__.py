@@ -1,3 +1,3 @@
-from .tools import add_tool, search_tool
+from .tools import add_tool, search_tool, bootstrap
 
-__all__ = ["add_tool", "search_tool"]
+__all__ = ["add_tool", "search_tool", "bootstrap"]
