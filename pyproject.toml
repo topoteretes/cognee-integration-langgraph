@@ -20,3 +20,8 @@ dependencies = [
 where = ["."]
 include = ["langgraph_cognee*"]
 exclude = ["notebooks*", "examples*"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.13.0",
+]
