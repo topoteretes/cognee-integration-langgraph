@@ -1,0 +1,6 @@
+Contract C-104
+Client: GreenGrid Energy
+Industry: Energy
+Value: £3.1M
+Signed: Nov 2021
+Expiry: Nov 2026

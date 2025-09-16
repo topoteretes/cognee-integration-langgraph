@@ -1,0 +1,6 @@
+Contract C-102
+Client: Orion Retail Group
+Industry: Retail
+Value: £850K
+Signed: Mar 2024
+Expiry: Mar 2026

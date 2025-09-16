@@ -1,0 +1,6 @@
+Contract C-103
+Client: FinEdge Capital
+Industry: Finance
+Value: £2.5M
+Signed: Jul 2022
+Expiry: Jul 2025
