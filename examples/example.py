@@ -2,13 +2,11 @@
 from langgraph.prebuilt import create_react_agent
 from langgraph.store.memory import InMemoryStore
 from langchain_core.messages import HumanMessage
-from langgraph_cognee import add_tool, search_tool, list_data_entries_tool, delete_data_entry_tool
-from examples.utils.fs_util_tools import list_path_contents_tool, read_file_tool
+from langgraph_cognee import add_tool, search_tool
 import asyncio
-import cognee
 from dotenv import load_dotenv
 import os
-from cognee.modules.search.types import SearchType
+import cognee
 load_dotenv()
 
 async def main():
@@ -30,6 +28,9 @@ async def main():
         }
     )
 
+    await cognee.prune.prune_data()
+    await cognee.prune.prune_system(metadata=True)
+
 
     # Create an agent with memory capabilities
     agent = create_react_agent(
@@ -37,31 +38,53 @@ async def main():
         tools=[
             add_tool,
             search_tool,
-            list_data_entries_tool,
-            delete_data_entry_tool,
-            read_file_tool,
-            list_path_contents_tool,
         ],
         store=store,
     )
 
-#     response = agent.invoke(
-#         {
-#             "messages": [
-#                 HumanMessage(content="""STEP 1: Use list_path_contents_tool to find all files in '/Users/daulet/Desktop/dev/langgraph-cognee/examples/data' directory.
-# STEP 2: For each .txt file found, use read_file_tool to read its content.
-# STEP 3: For each file content you read, MUST use add_tool to store it in the knowledge base.
-# STEP 4: After adding all files, confirm all data was stored by using add_tool for each file's content."""),
-#             ],
-#         }
-#     )
-#     print("=== FIRST RESPONSE ===")
-#     print(response["messages"][-1].content)
+    agent.step_timeout = None
+
+    """
+        # Step 1. open file and read the content + add to cognee
+    """
+    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    for filename in os.listdir(data_dir):
+        if filename.endswith(".txt"):
+            file_path = os.path.join(data_dir, filename)
+            with open(file_path, "r") as f:
+                content = f.read()
+                await cognee.add(content)
+    await cognee.cognify()
 
     response = agent.invoke(
         {
             "messages": [
-                HumanMessage(content="Using search tool, give me an overview of our contracts - how many we have, what is the total amount of money we have received from them, what is the total number of active contracts we have."),
+                HumanMessage(content="""
+                    We have signed a contract with the following company: "Meditech Solutions". Company is in the healthcare industry. Start date is Jan 2023 and end date is Dec 2025. Contract value is £1.2M.
+                """),
+            ],
+        }
+    )
+    """
+        Do a research on the following topic: "What contracts are in the healthcare industy?"
+    """
+    print("=== FIRST RESPONSE ===")
+    print(response["messages"][-1].content)
+
+    # Create a fresh agent instance to avoid memory interference
+    fresh_agent = create_react_agent(
+        "openai:gpt-4o-mini",
+        tools=[
+            add_tool,
+            search_tool,
+        ],
+        store=store,
+    )
+    
+    response = fresh_agent.invoke(
+        {
+            "messages": [
+                HumanMessage(content="I need to research our contract portfolio. Can you search for any contracts we have with companies in the healthcare industry? Please use the search functionality to find this information."),
             ],
         }
     )

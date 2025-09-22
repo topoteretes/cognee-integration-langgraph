@@ -1,6 +1,0 @@
-Contract C-110
-Client: QuantumSoft
-Industry: Technology
-Value: £5.5M
-Signed: Aug 2024
-Expiry: Aug 2028

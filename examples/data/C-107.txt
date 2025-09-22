@@ -1,6 +1,0 @@
-Contract C-107
-Client: AgroPlus Foods
-Industry: Agriculture
-Value: £980K
-Signed: Feb 2023
-Expiry: Feb 2025

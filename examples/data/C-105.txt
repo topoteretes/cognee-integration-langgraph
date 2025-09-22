@@ -1,6 +1,0 @@
-Contract C-105
-Client: AeroLogix
-Industry: Aerospace
-Value: £4.0M
-Signed: May 2023
-Expiry: May 2027

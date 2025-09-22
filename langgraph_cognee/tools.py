@@ -29,11 +29,11 @@ def _run_async(coro):
     fut = asyncio.run_coroutine_threadsafe(coro, _loop)
     try:
         # Add timeout and better error handling
-        result = fut.result(timeout=30)  # 30 second timeout
-        logger.info(f"Async operation completed successfully")
+        result = fut.result(timeout=120)  # 120 second timeout
+        logger.info("Async operation completed successfully")
         return result
     except concurrent.futures.TimeoutError:
-        logger.error(f"Async operation timed out after 30 seconds")
+        logger.error("Async operation timed out after 120 seconds")
         raise Exception("Operation timed out - check for deadlocks")
     except Exception as e:
         logger.error(f"Async operation failed with exception: {e}")
@@ -41,6 +41,25 @@ def _run_async(coro):
         traceback.print_exc()
         raise
 
+_lock = asyncio.Lock()
+_cognify_queue = asyncio.Queue()
+
+async def _enqueue_cognify():
+    await cognee.cognify()
+    global _lock, _cognify_queue
+    logger.info(f"Enqueuing cognify: {_lock.locked()}, {_cognify_queue.empty()}")
+    if _lock.locked() and _cognify_queue.empty():
+        return await _cognify_queue.put(None)
+    if not _cognify_queue.empty():
+        # already got a runner-up cognify
+        return
+    async with _lock:
+        logger.info("Running cognify")
+        await cognee.cognify()
+        while not _cognify_queue.empty():
+            logger.info("Running runner-up cognify")
+            await _cognify_queue.get()
+            await cognee.cognify()
 
 @tool
 def add_tool(data: str):

@@ -1,6 +1,0 @@
-Contract C-109
-Client: NovaBuild Construction
-Industry: Construction
-Value: £2.2M
-Signed: Apr 2023
-Expiry: Apr 2026

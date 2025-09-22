@@ -1,6 +1,0 @@
-Contract C-101
-Client: Meditech Solutions
-Industry: Healthcare
-Value: £1.2M
-Signed: Jan 2023
-Expiry: Dec 2025
