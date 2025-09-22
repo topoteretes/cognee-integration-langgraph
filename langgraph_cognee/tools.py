@@ -5,7 +5,6 @@ from langchain_core.tools import tool
 import logging
 import threading
 import concurrent.futures
-from cognee.modules.search.types import SearchType
 
 logger = logging.getLogger(__name__)
 
@@ -13,15 +12,19 @@ logger = logging.getLogger(__name__)
 _loop = None
 _loop_thread = None
 
+
 def _start_background_loop():
     global _loop, _loop_thread
     if _loop is None:
         _loop = asyncio.new_event_loop()
+
         def run_loop():
             asyncio.set_event_loop(_loop)
             _loop.run_forever()
+
         _loop_thread = threading.Thread(target=run_loop, daemon=True)
         _loop_thread.start()
+
 
 def _run_async(coro):
     """Run coroutine safely on a background event loop."""
@@ -38,28 +41,36 @@ def _run_async(coro):
     except Exception as e:
         logger.error(f"Async operation failed with exception: {e}")
         import traceback
+
         traceback.print_exc()
         raise
+
 
 _lock = asyncio.Lock()
 _cognify_queue = asyncio.Queue()
 
+
 async def _enqueue_cognify():
-    await cognee.cognify()
     global _lock, _cognify_queue
-    logger.info(f"Enqueuing cognify: {_lock.locked()}, {_cognify_queue.empty()}")
-    if _lock.locked() and _cognify_queue.empty():
-        return await _cognify_queue.put(None)
-    if not _cognify_queue.empty():
-        # already got a runner-up cognify
+
+    if _lock.locked():
+        if _cognify_queue.qsize() == 0:
+            await _cognify_queue.put(None)
         return
-    async with _lock:
-        logger.info("Running cognify")
-        await cognee.cognify()
-        while not _cognify_queue.empty():
-            logger.info("Running runner-up cognify")
-            await _cognify_queue.get()
+
+    try:
+        async with _lock:
             await cognee.cognify()
+            while not _cognify_queue.empty():
+                await _cognify_queue.get()
+                await cognee.cognify()
+
+    except Exception as e:
+        logger.error(f"Error during cognify: {e}")
+        while not _cognify_queue.empty():
+            await _cognify_queue.get()
+        raise
+
 
 @tool
 def add_tool(data: str):
@@ -79,7 +90,7 @@ def add_tool(data: str):
     """
     logger.info(f"Adding data to cognee: {data}")
     _run_async(cognee.add(data))
-    _run_async(cognee.cognify())
+    _run_async(_enqueue_cognify())
     return "Item added to cognee and processed"
 
 
@@ -105,13 +116,13 @@ def search_tool(query_text: str):
     return result
 
 
-@tool 
+@tool
 def list_data_entries_tool():
     """
     List all data entries in the knowledge base to find data IDs for deletion.
 
     Use this tool FIRST when you need to delete data. It automatically finds the default
-    dataset and returns all data entries with their IDs. Look for the entries you want 
+    dataset and returns all data entries with their IDs. Look for the entries you want
     to delete and use their data_id with delete_data_entry_tool.
 
     Returns:
@@ -119,23 +130,24 @@ def list_data_entries_tool():
     """
     logger.info("Listing data entries in cognee")
     result = _run_async(cognee.datasets.list_data())
-    
+
     logger.info("Getting dataset ID and listing data entries")
     result = _run_async(cognee.datasets.list_data())
     return result
+
 
 @tool
 def delete_data_entry_tool(data_id: str):
     """
     Delete a specific data entry from the knowledge base.
 
-    Use this tool as the SECOND STEP in deletion. First use list_data_entries_tool 
+    Use this tool as the SECOND STEP in deletion. First use list_data_entries_tool
     to see all data entries and find the specific data_id you want to delete,
     then use this tool to delete that entry.
 
     Args:
         data_id (str): The specific data entry ID from list_data_entries_tool.
-        
+
     Returns:
         str: Confirmation that the data entry was deleted.
     """

@@ -7,11 +7,13 @@ import asyncio
 from dotenv import load_dotenv
 import os
 import cognee
+
 load_dotenv()
+
 
 async def main():
     from cognee.api.v1.config import config
-    
+
     config.data_root_directory(
         os.path.join(os.path.dirname(__file__), "../.cognee/data_storage")
     )
@@ -30,7 +32,6 @@ async def main():
 
     await cognee.prune.prune_data()
     await cognee.prune.prune_system(metadata=True)
-
 
     # Create an agent with memory capabilities
     agent = create_react_agent(
@@ -59,9 +60,21 @@ async def main():
     response = agent.invoke(
         {
             "messages": [
-                HumanMessage(content="""
+                HumanMessage(
+                    content="""
                     We have signed a contract with the following company: "Meditech Solutions". Company is in the healthcare industry. Start date is Jan 2023 and end date is Dec 2025. Contract value is £1.2M.
-                """),
+                """
+                ),
+                HumanMessage(
+                    content="""
+                    We have signed a contract with the following company: "QuantumSoft". Company is in the technology industry. Start date is Aug 2024 and end date is Aug 2028. Contract value is £5.5M.
+                """
+                ),
+                HumanMessage(
+                    content="""
+                    We have signed a contract with the following company: "Orion Retail Group". Company is in the retail industry. Start date is Mar 2024 and end date is Mar 2026. Contract value is £850K.
+                """
+                ),
             ],
         }
     )
@@ -80,16 +93,19 @@ async def main():
         ],
         store=store,
     )
-    
+
     response = fresh_agent.invoke(
         {
             "messages": [
-                HumanMessage(content="I need to research our contract portfolio. Can you search for any contracts we have with companies in the healthcare industry? Please use the search functionality to find this information."),
+                HumanMessage(
+                    content="I need to research our contract portfolio. Can you search for any contracts we have with companies in the healthcare industry? Please use the search functionality to find this information."
+                ),
             ],
         }
     )
     print("\n=== SECOND RESPONSE ===")
     print(response["messages"][-1].content)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
