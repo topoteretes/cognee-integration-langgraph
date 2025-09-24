@@ -1,6 +1,5 @@
 # Import core components
 from langgraph.prebuilt import create_react_agent
-from langgraph.store.memory import InMemoryStore
 from langchain_core.messages import HumanMessage
 from langgraph_cognee import add_tool, search_tool
 import asyncio
@@ -22,14 +21,6 @@ async def main():
         os.path.join(os.path.dirname(__file__), "../.cognee/system")
     )
 
-    # Set up storage
-    store = InMemoryStore(
-        index={
-            "dims": 1536,
-            "embed": "openai:text-embedding-3-small",
-        }
-    )
-
     await cognee.prune.prune_data()
     await cognee.prune.prune_system(metadata=True)
 
@@ -40,7 +31,6 @@ async def main():
             add_tool,
             search_tool,
         ],
-        store=store,
     )
 
     agent.step_timeout = None
@@ -91,7 +81,6 @@ async def main():
             add_tool,
             search_tool,
         ],
-        store=store,
     )
 
     response = fresh_agent.invoke(
