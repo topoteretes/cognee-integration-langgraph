@@ -5,6 +5,8 @@ from langchain_core.tools import tool
 import logging
 import threading
 import concurrent.futures
+import functools
+from typing import Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -46,20 +48,20 @@ def _run_async(coro):
         raise
 
 
-_lock = asyncio.Lock()
+_cognify_lock = asyncio.Lock()
 _cognify_queue = asyncio.Queue()
 
 
 async def _enqueue_cognify():
-    global _lock, _cognify_queue
+    global _cognify_lock, _cognify_queue
 
-    if _lock.locked():
+    if _cognify_lock.locked():
         if _cognify_queue.qsize() == 0:
             await _cognify_queue.put(None)
         return
 
     try:
-        async with _lock:
+        async with _cognify_lock:
             await cognee.cognify()
             while not _cognify_queue.empty():
                 await _cognify_queue.get()
@@ -71,9 +73,15 @@ async def _enqueue_cognify():
             await _cognify_queue.get()
         raise
 
+_add_lock = asyncio.Lock()
+
+async def _enqueue_add(*args, **kwargs):
+    global _add_lock
+    async with _add_lock:
+        await cognee.add(*args, **kwargs)
 
 @tool
-def add_tool(data: str):
+def add_tool(data: str, node_set: Optional[List[str]] = None):
     """
     Store information in the knowledge base for later retrieval.
 
@@ -84,18 +92,21 @@ def add_tool(data: str):
 
     Args:
         data (str): The text or information you want to store and remember.
+        node_set (Optional[List[str]]): Additional node set identifiers.
 
     Returns:
         str: A confirmation message indicating that the item was added.
     """
     logger.info(f"Adding data to cognee: {data}")
-    _run_async(cognee.add(data))
+    
+    # Use lock to prevent race conditions during database initialization
+    _run_async(_enqueue_add(data, node_set=node_set))
     _run_async(_enqueue_cognify())
     return "Item added to cognee and processed"
 
 
 @tool
-def search_tool(query_text: str):
+def search_tool(query_text: str, node_set: Optional[List[str]] = None):
     """
     Search and retrieve previously stored information from the knowledge base.
 
@@ -106,6 +117,7 @@ def search_tool(query_text: str):
 
     Args:
         query_text (str): What you're looking for, written as a natural language search query.
+        node_set (Optional[List[str]]): Additional node set identifiers to filter search.
 
     Returns:
         list: A list of search results matching the query.
@@ -154,3 +166,45 @@ def delete_data_entry_tool(data_id: str):
     logger.info(f"Deleting data entry from cognee: {data_id}")
     _run_async(cognee.delete(data_id))
     return f"Successfully deleted data entry: {data_id}"
+
+def sessionised_tool(user_id: str):
+    """
+    Decorator factory that creates a decorator to add user_id to tool calls.
+    
+    Args:
+        user_id (str): The user session ID to bind to the tool
+        
+    Returns:
+        A decorator that modifies tools to use the specific user's session
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            logger.info(f"Using tool {func.__name__} with user_id: {user_id}")
+            # Inject user_id for tools that support it
+            if func.__name__ == 'add_tool':
+                kwargs['node_set'] = [user_id]
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+
+def get_sessionized_cognee_tools(user_id: str) -> list:
+    """
+    Returns a list of cognee tools sessionized for a specific user.
+    
+    Args:
+        user_id (str): The user session ID to bind to all tools
+        
+    Returns:
+        list: List of sessionized cognee tools
+    """
+    session_decorator = sessionised_tool(user_id)
+    
+    sessionized_add_tool = tool(session_decorator(add_tool.func))
+    sessionized_search_tool = tool(session_decorator(search_tool.func))
+    
+    return [
+        sessionized_add_tool,
+        sessionized_search_tool,
+    ]

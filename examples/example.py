@@ -1,7 +1,7 @@
 # Import core components
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
-from langgraph_cognee import add_tool, search_tool
+from langgraph_cognee import get_sessionized_cognee_tools
 import asyncio
 from dotenv import load_dotenv
 import os
@@ -24,6 +24,8 @@ async def main():
     await cognee.prune.prune_data()
     await cognee.prune.prune_system(metadata=True)
 
+    add_tool, search_tool = get_sessionized_cognee_tools('daulet-test-user')
+    
     # Create an agent with memory capabilities
     agent = create_react_agent(
         "openai:gpt-4o-mini",
@@ -35,17 +37,17 @@ async def main():
 
     agent.step_timeout = None
 
-    """
-        # Step 1. open file and read the content + add to cognee
-    """
-    data_dir = os.path.join(os.path.dirname(__file__), "data")
-    for filename in os.listdir(data_dir):
-        if filename.endswith(".txt"):
-            file_path = os.path.join(data_dir, filename)
-            with open(file_path, "r") as f:
-                content = f.read()
-                await cognee.add(content)
-    await cognee.cognify()
+    # """
+    #     # Step 1. open file and read the content + add to cognee
+    # """
+    # data_dir = os.path.join(os.path.dirname(__file__), "data")
+    # for filename in os.listdir(data_dir):
+    #     if filename.endswith(".txt"):
+    #         file_path = os.path.join(data_dir, filename)
+    #         with open(file_path, "r") as f:
+    #             content = f.read()
+    #             await cognee.add(content)
+    # await cognee.cognify()
 
     response = agent.invoke(
         {
@@ -71,9 +73,6 @@ async def main():
     """
         Do a research on the following topic: "What contracts are in the healthcare industy?"
     """
-    print("=== FIRST RESPONSE ===")
-    print(response["messages"][-1].content)
-
     # Create a fresh agent instance to avoid memory interference
     fresh_agent = create_react_agent(
         "openai:gpt-4o-mini",
