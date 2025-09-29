@@ -24,8 +24,8 @@ async def main():
     await cognee.prune.prune_data()
     await cognee.prune.prune_system(metadata=True)
 
-    add_tool, search_tool = get_sessionized_cognee_tools('daulet-test-user')
-    
+    add_tool, search_tool = get_sessionized_cognee_tools("daulet-test-user")
+
     # Create an agent with memory capabilities
     agent = create_react_agent(
         "openai:gpt-4o-mini",

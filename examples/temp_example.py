@@ -5,18 +5,14 @@ import asyncio
 from dotenv import load_dotenv
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
-load_dotenv()
 
+load_dotenv()
 
 
 async def main():
     # Create an agent with memory capabilities
     memory = InMemorySaver()
-    agent = create_react_agent(
-        "openai:gpt-4o-mini",
-        tools=[],
-        checkpointer=memory
-    )
+    agent = create_react_agent("openai:gpt-4o-mini", tools=[], checkpointer=memory)
 
     agent.step_timeout = None
 
@@ -55,9 +51,7 @@ async def main():
     response = fresh_agent.invoke(
         {
             "messages": [
-                HumanMessage(
-                    content="What is my name?"
-                ),
+                HumanMessage(content="What is my name?"),
             ],
         }
     )

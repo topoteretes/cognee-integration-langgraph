@@ -1,3 +1,4 @@
+from sqlalchemy.orm import session
 from . import bootstrap  # noqa: F401
 import cognee
 import asyncio
@@ -48,37 +49,28 @@ def _run_async(coro):
         raise
 
 
-_cognify_lock = asyncio.Lock()
-_cognify_queue = asyncio.Queue()
-
-
-async def _enqueue_cognify():
-    global _cognify_lock, _cognify_queue
-
-    if _cognify_lock.locked():
-        if _cognify_queue.qsize() == 0:
-            await _cognify_queue.put(None)
-        return
-
-    try:
-        async with _cognify_lock:
-            await cognee.cognify()
-            while not _cognify_queue.empty():
-                await _cognify_queue.get()
-                await cognee.cognify()
-
-    except Exception as e:
-        logger.error(f"Error during cognify: {e}")
-        while not _cognify_queue.empty():
-            await _cognify_queue.get()
-        raise
-
 _add_lock = asyncio.Lock()
+_add_queue = asyncio.Queue()
+
 
 async def _enqueue_add(*args, **kwargs):
     global _add_lock
+    if _add_lock.locked():
+        await _add_queue.put((args, kwargs))
+        return
     async with _add_lock:
-        await cognee.add(*args, **kwargs)
+        await _add_queue.put((args, kwargs))
+        while True:
+            try:
+                next_args, next_kwargs = await asyncio.wait_for(
+                    _add_queue.get(), timeout=2
+                )
+                _add_queue.task_done()
+            except asyncio.TimeoutError:
+                break
+            await cognee.add(*next_args, **next_kwargs)
+        await cognee.cognify()
+
 
 @tool
 def add_tool(data: str, node_set: Optional[List[str]] = None):
@@ -98,10 +90,9 @@ def add_tool(data: str, node_set: Optional[List[str]] = None):
         str: A confirmation message indicating that the item was added.
     """
     logger.info(f"Adding data to cognee: {data}")
-    
+
     # Use lock to prevent race conditions during database initialization
     _run_async(_enqueue_add(data, node_set=node_set))
-    _run_async(_enqueue_cognify())
     return "Item added to cognee and processed"
 
 
@@ -123,6 +114,7 @@ def search_tool(query_text: str, node_set: Optional[List[str]] = None):
         list: A list of search results matching the query.
     """
     logger.info(f"Searching cognee for: {query_text}")
+    _run_async(_add_queue.join())
     result = _run_async(cognee.search(query_text, top_k=100))
     logger.info(f"Search results: {result}")
     return result
@@ -167,43 +159,55 @@ def delete_data_entry_tool(data_id: str):
     _run_async(cognee.delete(data_id))
     return f"Successfully deleted data entry: {data_id}"
 
+
 def sessionised_tool(user_id: str):
     """
     Decorator factory that creates a decorator to add user_id to tool calls.
-    
+
     Args:
         user_id (str): The user session ID to bind to the tool
-        
+
     Returns:
         A decorator that modifies tools to use the specific user's session
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             logger.info(f"Using tool {func.__name__} with user_id: {user_id}")
             # Inject user_id for tools that support it
-            if func.__name__ == 'add_tool':
-                kwargs['node_set'] = [user_id]
+            if func.__name__ == "add_tool":
+                kwargs["node_set"] = [user_id]
             return func(*args, **kwargs)
-        
+
         return wrapper
+
     return decorator
 
-def get_sessionized_cognee_tools(user_id: str) -> list:
+
+def get_sessionized_cognee_tools(session_id: Optional[str] = None) -> list:
     """
     Returns a list of cognee tools sessionized for a specific user.
-    
+
     Args:
-        user_id (str): The user session ID to bind to all tools
-        
+        session_id (str): The session ID to bind to all tools
+
     Returns:
         list: List of sessionized cognee tools
     """
-    session_decorator = sessionised_tool(user_id)
-    
+    if session_id is None:
+        import uuid
+
+        uid = str(uuid.uuid4())
+        session_id = f"cognee-test-user-{uid}"
+
+    session_decorator = sessionised_tool(session_id)
+
     sessionized_add_tool = tool(session_decorator(add_tool.func))
     sessionized_search_tool = tool(session_decorator(search_tool.func))
-    
+
+    logger.info(f"Initialized session with session_id = {session_id}")
+
     return [
         sessionized_add_tool,
         sessionized_search_tool,
