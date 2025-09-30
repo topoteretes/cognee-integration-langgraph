@@ -18,10 +18,10 @@ LangGraph Integration Cognee combines the workflow orchestration capabilities of
 
 ```bash
 # Using uv
-uv add langgraph-integration-cognee
+uv add cognee-integration-langgraph
 
 # Using pip
-pip install langgraph-integration-cognee
+pip install cognee-integration-langgraph
 ```
 
 ## Available Tools
@@ -40,7 +40,7 @@ Returns sessionized cognee tools for isolated data management.
 LangGraph Integration Cognee supports user-specific sessions to isolate data between different users or contexts:
 
 ```python
-from langgraph_integration_cognee import get_sessionized_cognee_tools
+from cognee_integration_langgraph import get_sessionized_cognee_tools
 
 user1_tools = get_sessionized_cognee_tools("user-123")
 user2_tools = get_sessionized_cognee_tools("user-456")
