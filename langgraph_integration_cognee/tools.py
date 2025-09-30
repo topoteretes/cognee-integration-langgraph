@@ -120,46 +120,6 @@ def search_tool(query_text: str, node_set: Optional[List[str]] = None):
     return result
 
 
-@tool
-def list_data_entries_tool():
-    """
-    List all data entries in the knowledge base to find data IDs for deletion.
-
-    Use this tool FIRST when you need to delete data. It automatically finds the default
-    dataset and returns all data entries with their IDs. Look for the entries you want
-    to delete and use their data_id with delete_data_entry_tool.
-
-    Returns:
-        list: List of data entries, each containing an ID and other metadata that you can use for deletion.
-    """
-    logger.info("Listing data entries in cognee")
-    result = _run_async(cognee.datasets.list_data())
-
-    logger.info("Getting dataset ID and listing data entries")
-    result = _run_async(cognee.datasets.list_data())
-    return result
-
-
-@tool
-def delete_data_entry_tool(data_id: str):
-    """
-    Delete a specific data entry from the knowledge base.
-
-    Use this tool as the SECOND STEP in deletion. First use list_data_entries_tool
-    to see all data entries and find the specific data_id you want to delete,
-    then use this tool to delete that entry.
-
-    Args:
-        data_id (str): The specific data entry ID from list_data_entries_tool.
-
-    Returns:
-        str: Confirmation that the data entry was deleted.
-    """
-    logger.info(f"Deleting data entry from cognee: {data_id}")
-    _run_async(cognee.delete(data_id))
-    return f"Successfully deleted data entry: {data_id}"
-
-
 def sessionised_tool(user_id: str):
     """
     Decorator factory that creates a decorator to add user_id to tool calls.
