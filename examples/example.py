@@ -1,7 +1,7 @@
 # Import core components
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
-from langgraph_integration_cognee import get_sessionized_cognee_tools
+from cognee_integration_langgraph import get_sessionized_cognee_tools
 import asyncio
 from dotenv import load_dotenv
 import os

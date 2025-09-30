@@ -3,11 +3,14 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "langgraph-integration-cognee"
+name = "cognee-integration-langgraph"
 version = "0.1.0"
 description = "A powerful integration between LangGraph and Cognee providing intelligent knowledge management and retrieval capabilities for AI agents"
 readme = "README.md"
 requires-python = ">=3.12"
+authors = [
+    {name = "Cognee team"}
+]
 dependencies = [
     "cognee>=0.2.4,<0.3.4",
     "grandalf>=0.8",
@@ -22,9 +25,14 @@ dependencies = [
     "wikibase-rest-api-client>=0.2.5",
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/topoteretes/cognee-integration-langgraph"
+"Repository" = "https://github.com/topoteretes/cognee-integration-langgraph"
+"Documentation" = "https://github.com/topoteretes/cognee-integration-langgraph#readme"
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["langgraph_integration_cognee*"]
+include = ["cognee_integration_langgraph*"]
 exclude = ["notebooks*", "examples*"]
 
 [dependency-groups]
