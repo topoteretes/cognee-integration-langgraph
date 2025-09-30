@@ -1,10 +1,10 @@
-# LangGraph Integration Cognee
+# Cognee-Integration-LangGraph
 
-A powerful integration between LangGraph and Cognee that provides intelligent knowledge management and retrieval capabilities for AI agents.
+A powerful integration between Cognee and LangGraph that provides intelligent knowledge management and retrieval capabilities for AI agents.
 
 ## Overview
 
-LangGraph Integration Cognee combines the workflow orchestration capabilities of LangGraph with Cognee's advanced knowledge storage and retrieval system. This integration allows you to build AI agents that can efficiently store, search, and retrieve information from a persistent knowledge base.
+`cognee-integration-langgraph` combines Cognee's advanced knowledge storage and retrieval system with LangGraph's workflow orchestration capabilities. This integration allows you to build AI agents that can efficiently store, search, and retrieve information from a persistent knowledge base.
 
 ## Features
 
@@ -37,7 +37,7 @@ Returns sessionized cognee tools for isolated data management.
 
 ## Session Management
 
-LangGraph Integration Cognee supports user-specific sessions to isolate data between different users or contexts:
+`cognee-integration-langgraph` supports user-specific sessions to isolate data between different users or contexts:
 
 ```python
 from cognee_integration_langgraph import get_sessionized_cognee_tools
