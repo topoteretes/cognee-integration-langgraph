@@ -3,13 +3,13 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "langgraph-cognee"
+name = "langgraph-integration-cognee"
 version = "0.1.0"
-description = "Add your description here"
+description = "A powerful integration between LangGraph and Cognee providing intelligent knowledge management and retrieval capabilities for AI agents"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "cognee",
+    "cognee>=0.2.4,<0.3.4",
     "grandalf>=0.8",
     "ipykernel>=6.30.1",
     "ipython>=9.5.0",
@@ -24,7 +24,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["langgraph_cognee*"]
+include = ["langgraph_integration_cognee*"]
 exclude = ["notebooks*", "examples*"]
 
 [dependency-groups]

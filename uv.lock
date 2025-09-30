@@ -1870,7 +1870,7 @@ wheels = [
 ]
 
 [[package]]
-name = "langgraph-cognee"
+name = "langgraph-integration-cognee"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -1894,7 +1894,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cognee" },
+    { name = "cognee", specifier = ">=0.2.4,<0.3.4" },
     { name = "grandalf", specifier = ">=0.8" },
     { name = "ipykernel", specifier = ">=6.30.1" },
     { name = "ipython", specifier = ">=9.5.0" },
