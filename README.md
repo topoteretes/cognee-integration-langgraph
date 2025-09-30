@@ -17,7 +17,7 @@ LangGraph Integration Cognee combines the workflow orchestration capabilities of
 ## Installation
 
 ```bash
-# Using uv (recommended)
+# Using uv
 uv add langgraph-integration-cognee
 
 # Using pip
@@ -42,25 +42,23 @@ LangGraph Integration Cognee supports user-specific sessions to isolate data bet
 ```python
 from langgraph_integration_cognee import get_sessionized_cognee_tools
 
-# Create tools for specific user sessions
 user1_tools = get_sessionized_cognee_tools("user-123")
 user2_tools = get_sessionized_cognee_tools("user-456")
-
-# Each user will have their own isolated knowledge base
 ```
 
 ## Configuration
 
-Make sure to set your OpenAI API key:
+Copy the `.env.template` file to `.env` and fill out the required API keys:
 
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
+cp .env.template .env
 ```
 
-Or use a `.env` file:
+Then edit the `.env` file and set both keys using your OpenAI API key:
 
 ```env
-OPENAI_API_KEY=your-api-key-here
+OPENAI_API_KEY=your-openai-api-key-here
+LLM_API_KEY=your-openai-api-key-here
 ```
 
 ## Examples
